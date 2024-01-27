@@ -2,23 +2,23 @@
   "simulation": {
     "num_epochs": 40,
     "timesteps_per_epoch": 40,
-    "learning_rate": 0.001,
+    "learning_rate": 0.00001,
     "noise_range": [-0.01, 0.01],
-    "target_value": 7
+    "target_value": 1
   },
   "controller": {
-    "type": "classic",
+    "type": "neural_net",
     "classic": {
-      "kp": 1.0,
-      "ki": 0.1,
-      "kd": 0.01
+      "kp": 0.9,
+      "ki": 0.2,
+      "kd": 0.06
     },
     "neural_net": {
-      "num_layers": 3,
-      "neurons_per_layer": [10, 10, 10],
+      "layers": [3, 2, 1],
       "activation_functions": ["Sigmoid", "Tanh", "RELU"],
-      "weight_initial_range": [-1.0, 1.0],
-      "bias_initial_range": [-1.0, 1.0]
+      "activation_function": "Sigmoid",
+      "weight_initial_range": [-0.1, 0.1],
+      "bias_initial_range": [-0.1, 0.1]
     }
   },
   "plant": {
@@ -35,9 +35,10 @@
       "q1": 0.5,
       "q2": 0.5
     },
-    "custom_plant": {
-      "param1": "value1",
-      "param2": "value2"
+    "logistic_growth": {
+      "carrying_capacity": 1000,
+      "growth_rate": 0.1,
+      "initial_population": 100
     }
   },
   "visualization": {

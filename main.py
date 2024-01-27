@@ -1,5 +1,5 @@
 import random
-from plant import Bathtub, CournotCompetition
+from plant import Bathtub, CournotCompetition, LogisticGrowthPlant
 from controller import ClassicController, NeuralNetworkController
 import jax
 import jax.numpy as jnp
@@ -12,7 +12,6 @@ from jax import jit
 class ConSys:
     def __init__(self, config):
         self.config = config
-
 
     def plot_history(self, series_list, title, x_label, y_label, legend_labels):
         plt.figure(figsize=(12, 5))
@@ -33,9 +32,7 @@ class ConSys:
         plt.grid(True)
         plt.show()
 
-    def run_one_epoch(self, params, disturbance_array):
-        plant = CournotCompetition(self.config)
-        controller = ClassicController(params, config['simulation']['learning_rate'])
+    def run_one_epoch(self, params, controller, plant, disturbance_array):
         disturbance_array = jnp.array(disturbance_array)
         control_signal = 0
 
@@ -46,13 +43,27 @@ class ConSys:
         return controller.loss_function(), controller.get_error_history()
     
     def run_system(self):
+        classic_params = jnp.array([config["controller"]["classic"]["kp"],config["controller"]["classic"]["ki"], config["controller"]["classic"]["kd"] ])
+        classic_controller = ClassicController(classic_params, config['simulation']['learning_rate'])
+
+        neural_net_params = self.gen_neural_net_params()
+        neural_net_controller = NeuralNetworkController(neural_net_params, config['simulation']['learning_rate'], config['controller']['neural_net']["activation_function"] )
+
+        plant = LogisticGrowthPlant(self.config)
+
+        if self.config["controller"]["type"] == "classic":
+            controller = classic_controller
+            params = classic_params
+        elif self.config["controller"]["type"] == "neural_net":
+            controller = neural_net_controller
+            params = neural_net_params
+
         gradfunc = jax.value_and_grad(self.run_one_epoch, argnums=0,has_aux=True)
-        disturbance_array = np.random.uniform(-0.01, 0.01, self.config["simulation"]["timesteps_per_epoch"])
-        params = jnp.array([config["controller"]["classic"]["kp"],config["controller"]["classic"]["ki"], config["controller"]["classic"]["kd"] ])
         kp_history, ki_history, kd_history, mse_history = [], [], [], []
 
         for i in range(self.config["simulation"]["num_epochs"]):
-            (mse, error_history), grads = gradfunc(params,disturbance_array)
+            disturbance_array = np.random.uniform(-0.01, 0.01, self.config["simulation"]["timesteps_per_epoch"])
+            (mse, error_history), grads = gradfunc(params, controller,plant, disturbance_array)
             mse_history.append(mse)
             params-= config["simulation"]["learning_rate"]*grads
 
@@ -66,7 +77,20 @@ class ConSys:
         self.plot_history(error_history, 'Error History over Timesteps', 'Timestep', 'Error', ['Error per timestep'])
 
 
+    def gen_neural_net_params(self):
+        layers = self.config["controller"]["neural_net"]["layers"]
+        weight_range = self.config["controller"]["neural_net"]["weight_initial_range"]
+        bias_range = self.config["controller"]["neural_net"]["bias_initial_range"]
+        layers = self.config["controller"]["neural_net"]["layers"]
+        sender = layers[0]; params = []
+        for receiver in layers[1:]:
+            weights = np.random.uniform(weight_range[0],weight_range[1], (sender, receiver))
+            biases = np.random.uniform(bias_range[0], bias_range[1],(1,receiver))
+            params.append([weights, biases])
+            sender = receiver
+        return params
 
+        
 
 
             

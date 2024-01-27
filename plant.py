@@ -40,5 +40,18 @@ class CournotCompetition:
         P1 = self.q1*(p-self.cm)
         return P1
     
+class LogisticGrowthPlant:
+    def __init__(self, config):
+        self.population = config["plant"]["logistic_growth"]["initial_population"]
+        self.growth_rate = config["plant"]["logistic_growth"]["growth_rate"]
+        self.carrying_capacity = config["plant"]["logistic_growth"]["carrying_capacity"]
+
+    def update_state(self, control_signal, noise):
+        growth = self.growth_rate * self.population * (1 - self.population / self.carrying_capacity)
+        new_population = self.population + growth + control_signal + noise
+        new_population = max(min(new_population, self.carrying_capacity), 0)
+        self.population = new_population
+        return self.population
+    
     
 
