@@ -10,9 +10,13 @@ class Bathtub:
         self.C = self.A/100
 
     def update_state(self, u, d):
+        # print("HEIGHT BEFORE: ")
+        # print(self.water_height)
         change_in_volume = u + d - jnp.sqrt(2*self.gravitational_constant*self.water_height)*self.C
         self.water_volume+= change_in_volume
         self.water_height+= change_in_volume/self.A
+        # print("HEIGHT AFTER: ")
+        # print(self.water_height)
         return self.water_height
 
     

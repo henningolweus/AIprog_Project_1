@@ -1,22 +1,22 @@
 {
   "simulation": {
-    "num_epochs": 40,
-    "timesteps_per_epoch": 40,
-    "learning_rate": 0.00001,
+    "num_epochs": 10,
+    "timesteps_per_epoch": 100,
+    "learning_rate": 0.01,
     "noise_range": [-0.01, 0.01],
     "target_value": 1
   },
   "controller": {
     "type": "neural_net",
     "classic": {
-      "kp": 0.9,
-      "ki": 0.2,
-      "kd": 0.06
+      "kp": 0.1,
+      "ki": 0.01,
+      "kd": 0.001
     },
     "neural_net": {
-      "layers": [3, 2, 1],
+      "layers": [3, 5, 1],
       "activation_functions": ["Sigmoid", "Tanh", "RELU"],
-      "activation_function": "Sigmoid",
+      "activation_function": "Tanh",
       "weight_initial_range": [-0.1, 0.1],
       "bias_initial_range": [-0.1, 0.1]
     }
