@@ -44,35 +44,48 @@ class ConSys:
             output = plant.update_state(control_signal,disturbance_array[i])
             error = self.config["simulation"]["target_value"] - output
             control_signal = controller.compute_control_signal(error)
-            control_signal_history.append(control_signal)
+            #control_signal_history.append(control_signal)
             output_history.append(output)
 
-        return controller.loss_function(), output_history
+        return controller.loss_function(), output_history #, control_signal_history
 
-    def update_params(self, params, grads, learning_rate):
+    def update_params(self, params, grads, learning_rate, clip_value=1.0):
+        # Gradient clipping function
+        def clip_gradient(gradient):
+            norm = jnp.linalg.norm(gradient)
+            return jnp.where(norm > clip_value, gradient * clip_value / norm, gradient)
+
         if isinstance(params, list) and isinstance(params[0], list):  # Check if params is a list of lists (neural network)
             updated_params = []
             for (w, b), (gw, gb) in zip(params, grads):
-                new_w = w - learning_rate * gw
-                new_b = b - learning_rate * gb
+                # Clip gradients
+                clipped_gw = clip_gradient(gw)
+                clipped_gb = clip_gradient(gb)
+
+                # Update weights and biases with clipped gradients
+                new_w = w - learning_rate * clipped_gw
+                new_b = b - learning_rate * clipped_gb
                 updated_params.append([new_w, new_b])
             return updated_params
         else:  # Assuming params is a simple list/array (classical PID)
-            return params - learning_rate * grads
+            # Clip gradients if it's a single array
+            clipped_grads = clip_gradient(grads)
+            return params - learning_rate * clipped_grads
         
     def run_system(self):
         gradfunc = jax.value_and_grad(self.run_one_epoch, argnums=0,has_aux=True)
         params = self.init_params()
         
-        kp_history, ki_history, kd_history, mse_history = [], [], [], []
+        kp_history, ki_history, kd_history, mse_history = [], [], [], [], 
+        #Control_history,output_history= [], []
 
         for i in range(self.config["simulation"]["num_epochs"]):
             disturbance_array = np.random.uniform(-0.01, 0.01, self.config["simulation"]["timesteps_per_epoch"])
-            (mse, error_history), grads = gradfunc(params, disturbance_array)
+            (mse, output_history), grads = gradfunc(params, disturbance_array)
             mse_history.append(mse)
             print("GRADS JUST CALCULATED: ")
             print(grads)
-            error_history = np.squeeze(error_history)
+            #output_history = np.squeeze(output_history)
 
             # Update parameters
             learning_rate = self.config["simulation"]["learning_rate"]
@@ -83,16 +96,19 @@ class ConSys:
 
             print("MSE")
             print(mse)
-            
-            # kp_history.append(params[0])
-            # ki_history.append(params[1])
-            # kd_history.append(params[2])
+            if self.config["controller"]["type"] == "classic":
+                kp_history.append(params[0])
+                ki_history.append(params[1])
+                kd_history.append(params[2])
             print("epoch: " + str(i+1) + "/" + str(self.config["simulation"]["num_epochs"]))
         
         self.plot_history([kp_history, ki_history, kd_history],'PID Parameters over Epochs','Epoch','Parameter Value',['kp', 'ki', 'kd'])
         self.plot_history(mse_history, 'Mean Squared Error over Epochs', 'Epoch', 'MSE Value', ['MSE'])
-        print(error_history)
-        self.plot_history(error_history, 'Error History over Timesteps', 'Timestep', 'Error', ['Error per timestep'])
+        #print(error_history)
+        
+        #self.plot_history(error_history, 'Error History over Timesteps', 'Timestep', 'Error', ['Error per timestep'])
+        self.plot_history(output_history, 'Output History over Timesteps', 'Timestep', 'Output', ['Output per timestep'])
+        #self.plot_history(Control_history, 'Control History over Timesteps', 'Timestep', 'Control signal', ['Error per timestep'])
 
 
     def gen_neural_net_params(self):
@@ -121,7 +137,7 @@ class ConSys:
         if self.config["controller"]["type"] == "classic":
             controller = ClassicController( config['simulation']['learning_rate'], params)
         elif self.config["controller"]["type"] == "neural_net":
-            controller = NeuralNetworkController( config['simulation']['learning_rate'], config['controller']['neural_net']["activation_function"], params )
+            controller = NeuralNetworkController( config['simulation']['learning_rate'], config['controller']['neural_net']["activation_functions"], params )
         else:
             raise ValueError(f"Unsupported controller type: {self.config['controller']['type']}")
         
