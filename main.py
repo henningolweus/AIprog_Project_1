@@ -37,25 +37,26 @@ class ConSys:
         control_signal = 0
         controller = self.init_controller(params)
         plant = self.init_plant() 
-        control_signal_history = []
         output_history = []
 
         for i in range(self.config["simulation"]["timesteps_per_epoch"]):
             output = plant.update_state(control_signal,disturbance_array[i])
             error = self.config["simulation"]["target_value"] - output
             control_signal = controller.compute_control_signal(error)
-            #control_signal_history.append(control_signal)
             output_history.append(output)
 
-        return controller.loss_function(), output_history #, control_signal_history
+        return controller.loss_function(), output_history
 
     def update_params(self, params, grads, learning_rate, clip_value=1.0):
         # Gradient clipping function
+        #calculate the Euclidean norm of the gradient vector
         def clip_gradient(gradient):
+
             norm = jnp.linalg.norm(gradient)
             return jnp.where(norm > clip_value, gradient * clip_value / norm, gradient)
 
         if isinstance(params, list) and isinstance(params[0], list):  # Check if params is a list of lists (neural network)
+            #Check if params is a list of lists (neural network)
             updated_params = []
             for (w, b), (gw, gb) in zip(params, grads):
                 # Clip gradients
@@ -73,20 +74,16 @@ class ConSys:
             return params - learning_rate * clipped_grads
         
     def run_system(self):
-        gradfunc = jax.value_and_grad(self.run_one_epoch, argnums=0,has_aux=True)
-        params = self.init_params()
-        
+        gradfunc = jax.value_and_grad(self.run_one_epoch, argnums=0,has_aux=True) #computes both the value and gradient of self.run_one_epoch (which returns MSE from loss function) with respect to its first argument
+        params = self.init_params() #initializes the parameters of the controller from the config file
         kp_history, ki_history, kd_history, mse_history = [], [], [], [], 
-        #Control_history,output_history= [], []
 
         for i in range(self.config["simulation"]["num_epochs"]):
             disturbance_array = np.random.uniform(-0.01, 0.01, self.config["simulation"]["timesteps_per_epoch"])
-            (mse, output_history), grads = gradfunc(params, disturbance_array)
+            (mse, output_history), grads = gradfunc(params, disturbance_array) #Calculates the MSE for the current epoch, and the gradients of the MSE with respect to the parameters
             mse_history.append(mse)
             print("GRADS JUST CALCULATED: ")
             print(grads)
-            #output_history = np.squeeze(output_history)
-
             # Update parameters
             learning_rate = self.config["simulation"]["learning_rate"]
             print("OLD AND NEW PARAMS")

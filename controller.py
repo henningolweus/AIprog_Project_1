@@ -64,7 +64,6 @@ class NeuralNetworkController():
     def get_error_history(self):
         return self.error_history
 
-    
 
     def predict(self, features):
         activations = jnp.array(features)

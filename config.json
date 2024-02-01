@@ -1,10 +1,10 @@
 {
   "simulation": {
     "num_epochs": 30,
-    "timesteps_per_epoch": 15,
-    "learning_rate": 0.1,
+    "timesteps_per_epoch": 50,
+    "learning_rate": 0.01,
     "noise_range": [-0.01, 0.01],
-    "target_value": 150
+    "target_value": 1
   },
   "controller": {
     "type": "neural_net",
@@ -14,18 +14,18 @@
       "kd": 0.001
     },
     "neural_net": {
-      "layers": [3, 5, 1],
-      "activation_functions": ["Sigmoid", "Tanh", "RELU"],
+      "layers": [3, 5, 5, 5, 1],
+      "activation_functions": ["Sigmoid","Sigmoid", "Tanh", "Tanh", "RELU"],
       "weight_initial_range": [-0.1, 0.1],
       "bias_initial_range": [-0.1, 0.1]
     }
   },
   "plant": {
-    "type": "logistic_growth",
+    "type": "bathtub",
     "bathtub": {
       "cross_sectional_area_A": 1.0,
       "drain_cross_sectional_area_C": 0.01,
-      "initial_height": 1,
+      "initial_height": 1.2,
       "gravitational_constant": 9.81
     },
     "cournot_competition": {
@@ -35,9 +35,9 @@
       "q2": 0.5
     },
     "logistic_growth": {
-      "carrying_capacity": 1000,
+      "carrying_capacity": 100,
       "growth_rate": 0.1,
-      "initial_population": 100
+      "initial_population": 30
     }
   },
   "visualization": {
