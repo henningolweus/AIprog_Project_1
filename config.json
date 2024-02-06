@@ -1,21 +1,21 @@
 {
   "simulation": {
-    "num_epochs": 30,
-    "timesteps_per_epoch": 50,
-    "learning_rate": 0.01,
+    "num_epochs": 10,
+    "timesteps_per_epoch": 30,
+    "learning_rate": 0.2,
     "noise_range": [-0.01, 0.01],
-    "target_value": 1.2
+    "target_value": 1
   },
   "controller": {
-    "type": "neural_net",
+    "type": "classic",
     "classic": {
       "kp": 0.1,
-      "ki": 0.01,
+      "ki": 0.02,
       "kd": 0.001
     },
     "neural_net": {
       "layers": [3, 5, 5, 5, 1],
-      "activation_functions": ["Sigmoid","Sigmoid", "Tanh", "Tanh", "RELU"],
+      "activation_functions": ["Sigmoid", "Sigmoid", "Tanh", "Tanh", "RELU"],
       "weight_initial_range": [-0.1, 0.1],
       "bias_initial_range": [-0.1, 0.1]
     }
@@ -25,7 +25,7 @@
     "bathtub": {
       "cross_sectional_area_A": 1.0,
       "drain_cross_sectional_area_C": 0.01,
-      "initial_height": 1.2,
+      "initial_height": 1,
       "gravitational_constant": 9.81
     },
     "cournot_competition": {
