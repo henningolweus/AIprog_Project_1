@@ -21,7 +21,6 @@ class ClassicController:
         self.error_history = []
         return params
 
-    
     def compute_control_signal(self, current_error):
         self.error_history.append(current_error)
         if len(self.error_history) >= 2:
@@ -35,8 +34,6 @@ class ClassicController:
     def loss_function(self):
         return jnp.mean(jnp.array(self.error_history)**2)
     
-    def get_error_history(self):
-        return self.error_history
 
 
 
@@ -48,7 +45,6 @@ class NeuralNetworkController():
         self.learning_rate = learning_rate
         self.error_history = []
         self.params = [(jnp.array(w), jnp.array(b)) for w, b in params]
-        # Initialize weights and biases for each layer based on the 'layers' configuration
 
     def compute_control_signal(self, current_error):
         self.error_history.append(current_error)
@@ -60,10 +56,6 @@ class NeuralNetworkController():
         error_array = jnp.array([current_error, error_sum, error_de])
         
         return self.predict(error_array)
-    
-    def get_error_history(self):
-        return self.error_history
-
 
     def predict(self, features):
         activations = jnp.array(features)
@@ -89,14 +81,8 @@ class NeuralNetworkController():
         else:
             raise ValueError(f"No activation function specified for layer {layer_index}")
     
-    
-
-    def model(self,params, cases):
-        return jnp.array([jnp.dot(params[0:-1],case) + params[-1] for case in cases])
-    
     def loss_function(self):
         return jnp.mean(jnp.array(self.error_history)**2)
-    
     
     def relu(x):
         return jnp.maximum(0, x)
@@ -107,26 +93,3 @@ class NeuralNetworkController():
         return 1 / (1 + jnp.exp(-x))
     
 
-    # def update_params(self, grads):
-    #     print("######PARAMS######")
-    #     params = [(jnp.array(w), jnp.array(b)) for w, b in params]
-    #     print(params)
-    #     print("######GRADS######")
-    #     print(grads)
-    #     new_params = []
-
-    #     for (w, b), (gw, gb) in zip(params, grads):
-    #         new_w = jnp.array(w) - self.learning_rate * jnp.array(gw)
-    #         new_b = jnp.array(b) - self.learning_rate * jnp.array(gb)
-    #         new_params.append([new_w, new_b])
-
-    #     params = new_params
-    #     self.error_history = []
-    #     return params
-    #     # ReLU activation function
-
-
-    # def update_not_in_use(self, loss_gradient):
-
-    #     self.params-= self.learning_rate*loss_gradient()
-    #     return self.params
